@@ -1,0 +1,32 @@
+plink --file GSA-24v2-0_A1_Demo_12 --make-bed --out GSA-24v2-0_A1_Demo_12
+
+## keep only SNPs
+plink --bfile GSA-24v2-0_A1_Demo_12 --snps-only just-acgt --make-bed --out GSA_v2_Demo
+
+## remove multiallelic SNPs
+
+plink --bfile GSA_v2_Demo --exclude GSA-24v2-0_A1_Trialleles.txt --make-bed --out temp1
+
+plink --bfile temp1 --exclude GSA-24v2-0_A1_MNVs.txt --make-bed --out temp2
+
+## find SNPs that duplicates, they have a 1 in the 2nd column
+
+awk '$2 == "1" { print $1 }' GSA-24v2-0_A1_CoordDups.txt > duplicates
+
+## remove duplicates
+
+plink --bfile temp2 --exclude duplicates --make-bed --out temp3
+
+## remove chr 0
+
+plink --bfile temp3 --not-chr 0 --make-bed --out temp4
+
+## rename some SNPs
+
+perl remove_gsa_snps.pl
+
+plink --bfile temp4  --update-name ../GSA/GSA-24v2-0_A1_b150_rsids_v2.txt --make-bed --out temp5
+
+## manually did GSA/GSA-24v2-0_A1_b150_rsids_v3.txt
+
+plink --bfile temp5 --update-name ../GSA/GSA-24v2-0_A1_b150_rsids_v3.txt --make-bed --out temp6
