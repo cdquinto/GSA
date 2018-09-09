@@ -1,3 +1,23 @@
+### Find duplicates
+awk '$2 == "1" { print $1 }' GSA-24v2-0_A1_CoordDups.txt > duplicates
+
+##Remove multiallelic SNPs and others from the manifest
+cat GSA-24v2-0_A1_Trialleles.txt GSA-24v2-0_A1_MNVs.txt > multiallelic_sites_gsa.txt
+
+### Remove duplicates and multiallelic SNPs
+
+perl remove_dup_multi.pl
+
+### Make list of all the SNPs to remove from the manifest
+
+cat duplicates multiallelic_sites_gsa.txt > temp
+
+sort temp | uniq > snps_to_remove.txt
+
+rm temp
+
+
+
 plink --file GSA-24v2-0_A1_Demo_12 --make-bed --out GSA-24v2-0_A1_Demo_12
 
 ## keep only SNPs
@@ -11,9 +31,10 @@ plink --bfile temp1 --exclude GSA-24v2-0_A1_MNVs.txt --make-bed --out temp2
 
 ## find SNPs that duplicates, they have a 1 in the 2nd column
 
-awk '$2 == "1" { print $1 }' GSA-24v2-0_A1_CoordDups.txt > duplicates
 
-## remove duplicates
+## remove duplicates from list GSA-24v2-0_A1_b150_rsids.txt
+
+perl remove_duplicates_in_list.pl
 
 plink --bfile temp2 --exclude duplicates --make-bed --out temp3
 
@@ -21,12 +42,14 @@ plink --bfile temp2 --exclude duplicates --make-bed --out temp3
 
 plink --bfile temp3 --not-chr 0 --make-bed --out temp4
 
+## find snps to remap some SNPs
+
+perl find_gsa_snps_to_remap.pl
+
 ## rename some SNPs
 
-perl remove_gsa_snps.pl
-
-plink --bfile temp4  --update-name ../GSA/GSA-24v2-0_A1_b150_rsids_v2.txt --make-bed --out temp5
+plink --bfile temp4  --update-name GSA_b150_rsids_nodup_v2.txt --make-bed --out temp5
 
 ## manually did GSA/GSA-24v2-0_A1_b150_rsids_v3.txt
 
-plink --bfile temp5 --update-name ../GSA/GSA-24v2-0_A1_b150_rsids_v3.txt --make-bed --out temp6
+plink --bfile temp5 --update-name GSA-24v2-0_A1_b150_rsids_v3.txt --make-bed --out temp6
