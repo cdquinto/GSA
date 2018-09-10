@@ -16,40 +16,34 @@ sort temp | uniq > snps_to_remove.txt
 
 rm temp
 
+## find in remap_gsa_unknown.txt the SNPs that have chr:position only
+## had to run this step in kexol
 
+cut -f1 remap_gsa_unknown.txt | sed 's/\:/ /g' > remap_gsa_unknown_v2.txt
 
-plink --file GSA-24v2-0_A1_Demo_12 --make-bed --out GSA-24v2-0_A1_Demo_12
+## removed extra lines
 
-## keep only SNPs
-plink --bfile GSA-24v2-0_A1_Demo_12 --snps-only just-acgt --make-bed --out GSA_v2_Demo
+perl find_missing_snps.pl
 
-## remove multiallelic SNPs
+## find in remap_gsa_unknown.txt all the SNPs that start with GSA_*
+## and remap them (also run it in kexol)
 
-plink --bfile GSA_v2_Demo --exclude GSA-24v2-0_A1_Trialleles.txt --make-bed --out temp1
+perl find_gsa_named_snps.pl
 
-plink --bfile temp1 --exclude GSA-24v2-0_A1_MNVs.txt --make-bed --out temp2
+##
+sed 's/\. //g' remap_gsa_named.txt > temp
+mv temp remap_gsa_named.txt
 
-## find SNPs that duplicates, they have a 1 in the 2nd column
+cut -f1,4 remap_gsa_named.txt > temp
+cat GSA-24v2-0_A1_b150_rsids_nodup_nomulti.txt temp > GSA-24v2-0_A1_b150_rsids_nodup_nomulti_remapped_v1.txt
+rm temp
 
+## remove duplicates of the same values in both columns
+awk 'NR==FNR{if ($1 == $2){next;} else{print $1"\t"$2}}' OFS='\t' GSA-24v2-0_A1_b150_rsids_nodup_nomulti_remapped_v1.txt > temp
+mv temp GSA-24v2-0_A1_b150_rsids_nodup_nomulti_remapped_v1.txt
 
-## remove duplicates from list GSA-24v2-0_A1_b150_rsids.txt
+cut -f1,4 snps_to_add_to_manifest.txt > temp
+cat GSA-24v2-0_A1_b150_rsids_nodup_nomulti_remapped_v1.txt temp > GSA-24v2-0_A1_b150_rsids_nodup_nomulti_remapped_v2.txt
+rm temp
 
-perl remove_duplicates_in_list.pl
-
-plink --bfile temp2 --exclude duplicates --make-bed --out temp3
-
-## remove chr 0
-
-plink --bfile temp3 --not-chr 0 --make-bed --out temp4
-
-## find snps to remap some SNPs
-
-perl find_gsa_snps_to_remap.pl
-
-## rename some SNPs
-
-plink --bfile temp4  --update-name GSA_b150_rsids_nodup_v2.txt --make-bed --out temp5
-
-## manually did GSA/GSA-24v2-0_A1_b150_rsids_v3.txt
-
-plink --bfile temp5 --update-name GSA-24v2-0_A1_b150_rsids_v3.txt --make-bed --out temp6
+## there are still some duplicates that I'm going to have to delete at some point
