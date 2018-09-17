@@ -53,16 +53,14 @@ perl make_new_manifest.pl
 
 ## test
 
-plink --file GSA-24v2-0_A1_Demo_12 --snps-only just-acgt --exclude snps_to_remove.txt --make-bed --out temp1
+plink --file GSA-24v2-0_A1_Demo_12 --snps-only just-acgt --not-chr 0 --exclude snps_to_remove.txt --make-bed --out temp1
 
 plink --bfile temp1 --update-chr GSA-24v2-0_A1_b150_rsids_nodup_nomulti_remapped_v3.txt 3 1 --update-cm GSA-24v2-0_A1_b150_rsids_nodup_nomulti_remapped_v3.txt 5 1 --update-map GSA-24v2-0_A1_b150_rsids_nodup_nomulti_remapped_v3.txt 4 1 --make-bed --out temp2
 
 plink --bfile temp2 --update-name GSA-24v2-0_A1_b150_rsids_nodup_nomulti_remapped_v3.txt 2 1 --make-bed --out temp3
 
-cut -f2 temp3.bim | sort | uniq -d > duplicates_plink
+cut -f2 temp3.bim | sort | uniq -d > duplicates_temp3
 
-plink --bfile temp3 --exclude duplicates_plink --make-bed --out temp4 
+plink --bfile temp3 --exclude duplicates_temp3 --make-bed --out temp4
 
-plink --bfile temp3 --list-duplicate-vars ids-only suppress-first --out list_duplicates_plink
-
-## have to remove duplicates from
+rm temp*
